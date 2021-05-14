@@ -14,17 +14,14 @@ export default function Login() {
       </Header>
       <Accordion styled attached="true">
         <Accordion.Title
-          active="true"
-          index={0}
+          active={true}
         >
-          {/* <Icon name="dropdown" /> */}
           <Icon name="info" />
         Connect to Spotify
       </Accordion.Title>
-        <Accordion.Content active="true">
+        <Accordion.Content active={true}>
           <Container
             className="d-flex "
-          // style={{ minHeight: "60vh" }}
           >
             <a className="btn btn-success btn-lg" href={AUTH_URL} style={{ color: "black" }}>
               Login With Spotify
