@@ -27,6 +27,12 @@ class Messages extends React.Component {
     if (channel && user) { this.addListeners(channel.id, user.uid) }
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    if (this.messagesEnd) {
+      this.messagesEnd.scrollIntoView({ behavior: "smooth" })
+    }
+  }
+
   addListeners = (channelId, userId) => {
     this.addMessageListener(channelId);
     this.addUserStarsListener(channelId, userId)
@@ -164,6 +170,7 @@ class Messages extends React.Component {
         <Segment id="messages_segment">
           <Comment.Group className="messages">
             {searchTerm ? this.displayMessages(searchResults) : this.displayMessages(messages)}
+            <div ref={node => { this.messagesEnd = node }}></div>
           </Comment.Group>
         </Segment>
 

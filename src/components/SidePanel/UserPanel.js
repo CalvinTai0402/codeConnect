@@ -43,7 +43,7 @@ class UserPanel extends React.Component {
           <Grid.Row style={{ padding: "1.2em", margin: 0 }}>
             <Header inverted floated="left" as="h2">
               <Icon name="code" />
-              <Header.Content>SlackClone</Header.Content>
+              <Header.Content>codeConnect</Header.Content>
             </Header>
 
             <Header style={{ padding: "0.25em" }} as="h4" inverted>
