@@ -20,11 +20,12 @@ class Messages extends React.Component {
     isPrivateChannel: this.props.isPrivateChannel,
     privateMessagesRef: firebase.database().ref("privateMessages"),
     isChannelStarred: false,
+    listeners: []
   };
 
   componentDidMount() {
-    const { channel, user } = this.state;
-    if (channel && user) { this.addListeners(channel.id, user.uid) }
+    const { channel, user, listeners } = this.state;
+    if (channel && user) { this.removeListeners(listeners); this.addListeners(channel.id, user.uid) }
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -32,6 +33,29 @@ class Messages extends React.Component {
       this.messagesEnd.scrollIntoView({ behavior: "smooth" })
     }
   }
+
+  componentWillUnmount() {
+    this.removeListeners(this.state.listeners);
+  }
+
+  removeListeners = listeners => {
+    listeners.forEach(listener => {
+      listener.ref.child(listener.id).off(listener.event);
+    });
+  };
+
+  addToListeners = (id, ref, event) => {
+    const index = this.state.listeners.findIndex(listener => {
+      return (
+        listener.id === id && listener.ref === ref && listener.event === event
+      );
+    });
+
+    if (index === -1) {
+      const newListener = { id, ref, event };
+      this.setState({ listeners: this.state.listeners.concat(newListener) });
+    }
+  };
 
   addListeners = (channelId, userId) => {
     this.addMessageListener(channelId);
@@ -49,6 +73,7 @@ class Messages extends React.Component {
       });
       this.countUniqueUsers(loadedMessages);
     });
+    this.addToListeners(channelId, ref, "child_added");
   };
 
   addUserStarsListener = (channelId, userId) => {
