@@ -189,7 +189,7 @@ class Channels extends React.Component {
                     {this.displayChannels(channels)}
                 </Menu.Menu>
 
-                <Modal basic open={modal} onClose={this.closeModal}>
+                <Modal basic open={modal} onClose={this.closeModal} className="modalClass">
                     <Modal.Header>Add a Channel</Modal.Header>
                     <Modal.Content>
                         <Form>
@@ -222,7 +222,7 @@ class Channels extends React.Component {
                         </Button>
                     </Modal.Actions>
                 </Modal>
-            </React.Fragment>
+            </React.Fragment >
         );
     }
 }

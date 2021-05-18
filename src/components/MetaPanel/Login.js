@@ -25,7 +25,7 @@ export default function Login() {
           >
             <a className="btn btn-success btn-lg" href={AUTH_URL} style={{ color: "black" }}>
               Login With Spotify
-            </a>
+          </a>
           </Container>
         </Accordion.Content>
       </Accordion>

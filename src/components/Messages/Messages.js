@@ -1,5 +1,5 @@
 import React from "react";
-import { Segment, Comment } from "semantic-ui-react";
+import { Segment, Comment, Dropdown } from "semantic-ui-react";
 import MessagesHeader from "./MessagesHeader";
 import MessageForm from "./MessageForm";
 import Message from "./Message";
@@ -114,8 +114,29 @@ class Messages extends React.Component {
         key={message.timestamp}
         message={message}
         user={this.state.user}
+        style={{ position: "relative" }}
+        dropdownOptions={this.dropdownOptions}
       />
     ));
+  }
+
+  dropdownOptions = () => [
+    {
+      key: "edit",
+      text: <span onClick={this.handleEdit}>Edit Message</span>
+    },
+    {
+      key: "delete",
+      text: <span onClick={this.handleDelete}>Delete Message</span>
+    }
+  ];
+
+  handleEdit = () => {
+    console.log("edit")
+  }
+
+  handleDelete = () => {
+    console.log("delete")
   }
 
   displayChannelName = channel => {
@@ -192,7 +213,7 @@ class Messages extends React.Component {
           isChannelStarred={isChannelStarred}
           handleStar={this.handleStar} />
 
-        <Segment id="messages_segment">
+        <Segment className="messages_segment">
           <Comment.Group className="messages">
             {searchTerm ? this.displayMessages(searchResults) : this.displayMessages(messages)}
             <div ref={node => { this.messagesEnd = node }}></div>
