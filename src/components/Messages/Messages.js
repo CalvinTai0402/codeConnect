@@ -1,5 +1,5 @@
 import React from "react";
-import { Segment, Comment, Dropdown } from "semantic-ui-react";
+import { Segment, Comment } from "semantic-ui-react";
 import MessagesHeader from "./MessagesHeader";
 import MessageForm from "./MessageForm";
 import Message from "./Message";
@@ -20,7 +20,10 @@ class Messages extends React.Component {
     isPrivateChannel: this.props.isPrivateChannel,
     privateMessagesRef: firebase.database().ref("privateMessages"),
     isChannelStarred: false,
-    listeners: []
+    listeners: [],
+    editedMessage: "",
+    editedMessageId: null,
+    editing: false
   };
 
   componentDidMount() {
@@ -59,7 +62,7 @@ class Messages extends React.Component {
 
   addListeners = (channelId, userId) => {
     this.addMessageListener(channelId);
-    this.addUserStarsListener(channelId, userId)
+    this.addUserStarsListener(channelId, userId);
   };
 
   addMessageListener = channelId => {
@@ -67,14 +70,58 @@ class Messages extends React.Component {
     const ref = this.getMessagesRef();
     ref.child(channelId).on("child_added", snap => {
       loadedMessages.push(snap.val());
+      console.log(loadedMessages)
       this.setState({
         messages: loadedMessages,
         messagesLoading: false
       });
       this.countUniqueUsers(loadedMessages);
     });
+
+    ref.child(channelId).on("child_removed", async (snap) => {
+      await this.popMessages(snap.val())
+        .then((messages) => {
+          this.setState({
+            messages: messages,
+            messagesLoading: false
+          });
+          this.countUniqueUsers(messages);
+        })
+    })
+
+    ref.child(channelId).on("child_changed", async (snap) => {
+      await this.editMessages(snap.val())
+        .then((messages) => {
+          this.setState({
+            messages: messages,
+            messagesLoading: false
+          });
+        })
+    })
+
     this.addToListeners(channelId, ref, "child_added");
+    this.addToListeners(channelId, ref, "child_removed");
+    this.addToListeners(channelId, ref, "child_changed");
   };
+
+  popMessages = async (message) => {
+    let loadedMessages = this.state.messages;
+    for (let i = 0; i < loadedMessages.length; i++) {
+      if (loadedMessages[i].id === message.id) { loadedMessages.splice(i, 1); }
+    }
+    return loadedMessages
+  }
+
+  editMessages = async (message) => {
+    let updatedMessages = this.state.messages;
+    if (!this.state.editedMessage) return updatedMessages // weird fix for child_added
+    for (let i = 0; i < updatedMessages.length; i++) {
+      if (updatedMessages[i].id === message.id) { updatedMessages[i].content = this.state.editedMessage + " (Edited)"; }
+    }
+    this.setState({ editedMessage: "" })
+    console.log(this.state.messages)
+    return updatedMessages
+  }
 
   addUserStarsListener = (channelId, userId) => {
     this.state.usersRef
@@ -116,27 +163,44 @@ class Messages extends React.Component {
         user={this.state.user}
         style={{ position: "relative" }}
         dropdownOptions={this.dropdownOptions}
+        channel={this.state.channel}
       />
     ));
   }
 
-  dropdownOptions = () => [
+  dropdownOptions = (user, message, channel) => [
     {
       key: "edit",
-      text: <span onClick={this.handleEdit}>Edit Message</span>
+      text: <span onClick={() => this.handleEdit(message)}>Edit Message</span>
     },
     {
       key: "delete",
-      text: <span onClick={this.handleDelete}>Delete Message</span>
+      text: <span onClick={() => this.handleDelete(message, channel)}>Delete Message</span>
     }
   ];
 
-  handleEdit = () => {
-    console.log("edit")
+  handleEdit = (message) => {
+    if (message.user.id !== this.state.user.uid) {
+      alert("Can't edit a message that is not yours")
+    } else {
+      let content = ""
+      if (message.content.indexOf(" (Edited)") !== -1) {
+        content = message.content.substring(0, message.content.indexOf(" (Edited)"));
+      } else {
+        content = message.content
+      }
+
+      this.setState({ editedMessage: content, editedMessageId: message.id, editing: true })
+    }
   }
 
-  handleDelete = () => {
-    console.log("delete")
+  handleDelete = (message, channel) => {
+    if (message.user.id !== this.state.user.uid) {
+      alert("Can't delete a message that is not yours")
+    } else {
+      this.state.messagesRef.child(channel.id).child(message.id).remove()
+      this.setState({ editing: false, editedMessage: "", editedMessageId: null })
+    }
   }
 
   displayChannelName = channel => {
@@ -200,8 +264,13 @@ class Messages extends React.Component {
     }
   };
 
+  handleChange = event => { this.setState({ [event.target.name]: event.target.value }) };
+
+  stopEditing = () => { this.setState({ editing: false }) }
+
   render() {
-    const { messagesRef, channel, user, messages, numUniqueUsers, searchTerm, searchResults, searchLoading, isPrivateChannel, isChannelStarred } = this.state;
+    const { messagesRef, channel, user, messages, numUniqueUsers, searchTerm, searchResults,
+      searchLoading, isPrivateChannel, isChannelStarred, editedMessage, editedMessageId, editing } = this.state;
     return (
       <React.Fragment>
         <MessagesHeader
@@ -227,6 +296,11 @@ class Messages extends React.Component {
           currentUser={user}
           isPrivateChannel={isPrivateChannel}
           getMessagesRef={this.getMessagesRef}
+          editedMessage={editedMessage}
+          editedMessageId={editedMessageId}
+          handleChange={this.handleChange}
+          editing={editing}
+          stopEditing={this.stopEditing}
         />
       </React.Fragment>
     );

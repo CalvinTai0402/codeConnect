@@ -96,7 +96,7 @@ export default function Dashboard({ code }) {
   }, [search, accessToken])
 
   return (
-    <Container className="d-flex flex-column py-2" style={{ height: "80vh", backgroundColor: "#dcdee6" }}>
+    <Container className="d-flex flex-column py-2" style={{ height: "80vh", backgroundColor: "white" }}>
       <Form.Control
         type="search"
         placeholder="Search Songs/Artists"

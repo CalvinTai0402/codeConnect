@@ -17,6 +17,7 @@ class MessageForm extends React.Component {
         uploadTask: null,
         uploadState: "",
         percentUploaded: 0,
+        messagesRef: firebase.database().ref("messages"),
     };
 
     componentWillUnmount() {
@@ -32,9 +33,11 @@ class MessageForm extends React.Component {
 
     handleChange = event => { this.setState({ [event.target.name]: event.target.value }) };
 
-    createMessage = (fileUrl = null) => {
+    createMessage = (fileUrl = null, id = null) => {
         const message = {
+            id: id,
             timestamp: firebase.database.ServerValue.TIMESTAMP,
+            edited: false,
             user: {
                 id: this.state.user.uid,
                 name: this.state.user.displayName,
@@ -56,10 +59,8 @@ class MessageForm extends React.Component {
         const { message, channel } = this.state;
         if (message) {
             this.setState({ loading: true });
-            getMessagesRef()
-                .child(channel.id)
-                .push()
-                .set(this.createMessage())
+            let pushedMessageRef = getMessagesRef().child(channel.id).push()
+            pushedMessageRef.set(this.createMessage(null, pushedMessageRef.getKey()))
                 .then(() => {
                     this.setState({ loading: false, message: "", errors: [] });
                 })
@@ -75,6 +76,14 @@ class MessageForm extends React.Component {
             });
         }
     };
+
+    editMessage = () => {
+        this.state.messagesRef.child(this.state.channel.id).child(this.props.editedMessageId).update({
+            content: this.props.editedMessage + " (Edited)",
+        })
+        this.setState({ loading: false, errors: [] });
+        this.props.stopEditing()
+    }
 
     getPath = () => {
         if (this.props.isPrivateChannel) {
@@ -143,19 +152,31 @@ class MessageForm extends React.Component {
 
     render() {
         const { errors, message, modal, uploadState, percentUploaded } = this.state;
+        let submitOrEdit = this.props.editing ? this.editMessage : this.sendMessage
+        console.log(this.props.editing)
         return (
             <Segment className="message__form">
                 <Grid columns="equal">
                     <Grid.Column>
-                        <Form onSubmit={this.sendMessage} autoComplete="off">
-                            <Form.Input
-                                fluid
-                                name="message"
-                                style={{ marginBottom: "0.7em" }}
-                                placeholder="Write your message"
-                                className={errors.some(error => error.message.includes("message")) ? "error" : ""}
-                                value={message}
-                                onChange={this.handleChange} />
+                        <Form onSubmit={submitOrEdit} autoComplete="off">
+                            {this.props.editing ?
+                                <Form.Input
+                                    fluid
+                                    name="editedMessage"
+                                    style={{ marginBottom: "0.7em" }}
+                                    placeholder="Write your message"
+                                    className={errors.some(error => error.message.includes("message")) ? "error" : ""}
+                                    value={this.props.editedMessage}
+                                    onChange={this.props.handleChange} />
+                                : <Form.Input
+                                    fluid
+                                    name="message"
+                                    style={{ marginBottom: "0.7em" }}
+                                    placeholder="Write your message"
+                                    className={errors.some(error => error.message.includes("message")) ? "error" : ""}
+                                    value={message}
+                                    onChange={this.handleChange} />
+                            }
                         </Form>
                     </Grid.Column>
                     <Grid.Column width={4} >

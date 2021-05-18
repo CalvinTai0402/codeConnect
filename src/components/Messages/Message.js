@@ -1,20 +1,19 @@
 import React from "react";
 import moment from "moment";
-import { Comment, Image, Dropdown, Menu } from "semantic-ui-react";
+import { Comment, Image, Dropdown } from "semantic-ui-react";
 import ReactPlayer from 'react-player';
 import { Document, Page, pdfjs } from 'react-pdf';
+// import firebase from "../../firebase";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 // https://stackoverflow.com/questions/37760695/firebase-storage-and-access-control-allow-origin/37765371
 
 const isOwnMessage = (message, user) => { return message.user.id === user.uid ? "message__self" : "" };
-
 const isImage = message => { return message.hasOwnProperty("image") && !message.hasOwnProperty("content"); };
 const isVideo = message => { return message.hasOwnProperty("video") && !message.hasOwnProperty("content"); };
 const isPDF = message => { return message.hasOwnProperty("pdf") && !message.hasOwnProperty("content"); };
-
 const timeFromNow = timestamp => moment(timestamp).fromNow();
 
-const Message = ({ message, user, dropdownOptions }) => (
+const Message = ({ message, user, channel, dropdownOptions }) => (
     <Comment>
         <Comment.Avatar src={message.user.avatar} />
         <Comment.Content className={isOwnMessage(message, user)}>
@@ -31,7 +30,7 @@ const Message = ({ message, user, dropdownOptions }) => (
         <Dropdown
             simple
             direction='left'
-            options={dropdownOptions()}
+            options={dropdownOptions(user, message, channel)}
             style={{
                 position: "absolute",
                 top: "0px",
